@@ -105,17 +105,16 @@ def translateMorse(morse_array,base_length=100,color="255,255,255",shift_color=F
             waitEmit(base_length*7)
 
 def newColor(color,modulos,target,blink_counter):
-    color_array = splitColor(color)
-    out_color = []
+    color_array = color_to_rgb(color)
+    out_color = ()
     for i,single_color in enumerate(color_array):
         if color_array[i] < target[i]:
-            out_color.append(min(color_array[i] + abs(modulos[i]),255))
+            out_color += (min(color_array[i] + abs(modulos[i]),255),)
         elif color_array[i] > target[i]:
-            out_color.append(max(color_array[i] - abs(modulos[i]),0))
+            out_color += (max(color_array[i] - abs(modulos[i]),0),)
         else:
-            out_color.append(color_array[i])
-    colors = ",".join([str(i) for i in out_color])
-    return colors    
+            out_color += (color_array[i],)
+    return out_color    
 
 def color_to_rgb(color):
     if isinstance(color, tuple):
