@@ -11,7 +11,8 @@ Yup, it is. It's a quick hack with some features added as an afterthought. But i
 
 ## Commands
 ```
-usage: morse.py [-h] [-c COLOR] [-s] [-tc TARGET_COLOR] [-t TIME] text
+usage: morse.py [-h] [-c COLOR] [-s] [-tc TARGET_COLOR] [-t TIME] [-r REPEAT]
+                text
 
 positional arguments:
   text                  This is the text that should be emitted
@@ -26,5 +27,7 @@ optional arguments:
   -tc TARGET_COLOR, --target-color TARGET_COLOR
                         The final color of the blinks. Specify as R,G,B.
                         Default: 255,255,255
-  -t TIME, --time TIME  Duration of a single dit in milliseconds. Default: 100 
+  -t TIME, --time TIME  Duration of a single dit in milliseconds. Default: 100
+  -r REPEAT, --repeat REPEAT
+                        How many times should the message repeat? Default: 1
 ```
