@@ -211,7 +211,7 @@ def main():
     parser.add_argument("-s","--shift",action="store_true",help="Should the color shift? If yes: --target-color needs to be specified")
     parser.add_argument("-tc","--target-color",type=str,default="255,255,255", help="The final color of the blinks. Specify as R,G,B. Default: 255,255,255")
     parser.add_argument("-t","--time",type=int,default=100,help="Duration of a single dit in milliseconds.  Default: 100") 
-    parser.add_argument("-r","--repeat",type=int,default=1,help="How many times should the message repeat?  Defualt: 1") 
+    parser.add_argument("-r","--repeat",type=int,default=1,help="How many times should the message repeat?  Default: 1") 
     args = parser.parse_args()
     print(args)
     morse_text = translateText(args.text)
