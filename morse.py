@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import time, sys, os, subprocess, argparse
+import webcolors
 
 # SET TO BLINK TOOL PATH
 BLINK_TOOL_PATH = "blink1-tool"
@@ -47,6 +48,10 @@ morsetab = {
         ' ': ' ',               '_': '..--.-',
 }
 
+class InvalidColor(ValueError):
+    """Raised when the user requests an implausible colour
+    """
+
 def translateText(ascii_text):
     '''
     Translate ASCII input to morse code
@@ -55,7 +60,7 @@ def translateText(ascii_text):
     '''
     morse_output = []
     for c in ascii_text:
-        if morsetab.has_key(c):
+        if c in morsetab:
             morse_output.append(morsetab[c])
     return morse_output
 
@@ -68,23 +73,24 @@ def translateMorse(morse_array,base_length=100,color="255,255,255",shift_color=F
     4. shift_color: True/False, if True tries to shift the color over all blinks to target_color
     5. Only used if shift_color = True, this color should (more or less) be reached at the last blink
     '''
-    base_color = splitColor(color)
-    target = splitColor(target_color)
+    base_color = color_to_rgb(color)
+    target = color_to_rgb(target_color)
     number_blinks = numberBlinks(morse_array)
+    new_color = base_color
     mod_r, mod_g, mod_b = colorDiff(base_color,target,number_blinks)
     blink_counter = 0
     for character in morse_array:
         if character == " ":
-            print "space"
+            print("space")
             waitEmit(base_length*4+BLINK_TOOL_DELAY)
         else:
             for j in character:
                 if shift_color == True and blink_counter > 0:
-                    color = newColor(color,[mod_r,mod_g,mod_b],target,blink_counter)
+                    new_color = newColor(new_color,[mod_r,mod_g,mod_b],target,blink_counter)
                 if j == "-":
-                    emitDit(base_length,color,dah=True)
+                    emitDit(base_length,new_color,dah=True)
                 elif j == ".":
-                    emitDit(base_length,color)
+                    emitDit(base_length,new_color)
                 blink_counter += 1
             waitEmit(base_length*3)
 
@@ -93,7 +99,7 @@ def newColor(color,modulos,target,blink_counter):
     out_color = []
     for i,single_color in enumerate(color_array):
         if color_array[i] < target[i]:
-            out_color.append(min(color_array[i] +  abs(modulos[i]),255))
+            out_color.append(min(color_array[i] + abs(modulos[i]),255))
         elif color_array[i] > target[i]:
             out_color.append(max(color_array[i] - abs(modulos[i]),0))
         else:
@@ -101,12 +107,39 @@ def newColor(color,modulos,target,blink_counter):
     colors = ",".join([str(i) for i in out_color])
     return colors    
 
+def color_to_rgb(color):
+    if isinstance(color, tuple):
+        return color
+    if not color.startswith('#'):
+        try:
+            return splitColor(color)
+        except InvalidColor:
+            pass
+    if len(color) == 6:
+        color = '#' + color
+    if color.startswith('#'):
+        try:
+            return webcolors.hex_to_rgb(color)
+        except ValueError:
+            raise InvalidColor(color)
+    try:
+        return webcolors.name_to_rgb(color)
+    except ValueError:
+        raise InvalidColor(color)
+    else:
+        raise InvalidColor(color)
+
 def splitColor(color):
     '''
     Take color input in blink(1)-tool-format and 
     return as list with each value as integer 
     '''
-    colors = [ int(i) for i in color.split(",") ]
+    if len(color.split(",")) != 3:
+        raise InvalidColor(color)
+    colors = ()
+    for c in color.split(","):
+        colors += (int(c),)
+    
     return colors
 
 def colorDiff(base,target,number_blinks):
@@ -146,14 +179,14 @@ def emitDit(dit_length,color,dah=False):
     '''
     Lights please! Either a dit or a dah (3*time of dit)
     '''
-    command = BLINK_TOOL_PATH + " --rgb "+color+" -m 0 "
-    print(command),
+    command = BLINK_TOOL_PATH + ' --rgb "'+webcolors.rgb_to_hex(color)+'" -m 0 '
+    print((command), end=' ')
     output = subprocess.call(command, stdout=subprocess.PIPE, shell=True)
     if dah==True:
-        print "(dah)"
+        print("(dah)")
         time.sleep(float(dit_length*3)/1000)
     else:
-        print "(dit)"
+        print("(dit)")
         time.sleep(float(dit_length)/1000)
     command_off = BLINK_TOOL_PATH + " --off -m 0"
     output = subprocess.call(command_off, stdout=subprocess.PIPE, shell=True)
@@ -170,7 +203,7 @@ def main():
     parser.add_argument("-tc","--target-color",type=str,default="255,255,255", help="The final color of the blinks. Specify as R,G,B. Default: 255,255,255")
     parser.add_argument("-t","--time", type=int, default=100, help="Duration of a single dit in milliseconds. Default: 100") 
     args = parser.parse_args()
-    print args
+    print(args)
     morse_text = translateText(args.text)
     translateMorse(morse_text,base_length=args.time,color=args.color,shift_color=args.shift,target_color=args.target_color)
 
