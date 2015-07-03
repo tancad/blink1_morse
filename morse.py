@@ -64,7 +64,7 @@ def translateText(ascii_text):
             morse_output.append(morsetab[c])
     return morse_output
 
-def translateMorse(morse_array,base_length=100,color="255,255,255",shift_color=False,target_color="255,255,255"):
+def translateMorse(morse_array,base_length=100,color="255,255,255",shift_color=False,target_color="255,255,255",repeat=1):
     '''
     Send the morse code out to the blink(1). Accepts up to 5 arguments:
     1. morse_array: Text translated to morse by translateText() method
@@ -76,23 +76,33 @@ def translateMorse(morse_array,base_length=100,color="255,255,255",shift_color=F
     base_color = color_to_rgb(color)
     target = color_to_rgb(target_color)
     number_blinks = numberBlinks(morse_array)
-    new_color = base_color
     mod_r, mod_g, mod_b = colorDiff(base_color,target,number_blinks)
-    blink_counter = 0
-    for character in morse_array:
-        if character == " ":
-            print("space")
+    for i in range(0,repeat):
+        new_color = base_color
+        blink_counter = 0
+        for character in morse_array:
+            if character == " ":
+                print("space")
+                waitEmit(base_length*4+BLINK_TOOL_DELAY)
+            else:
+                for j in character:
+                    if shift_color == True and blink_counter > 0:
+                        new_color = newColor(new_color,[mod_r,mod_g,mod_b],target,blink_counter)
+                    if j == "-":
+                        emitDit(base_length,new_color,dah=True)
+                    elif j == ".":
+                        emitDit(base_length,new_color)
+                    blink_counter += 1
+                waitEmit(base_length*3)
+        if repeat > 1:
             waitEmit(base_length*4+BLINK_TOOL_DELAY)
-        else:
-            for j in character:
-                if shift_color == True and blink_counter > 0:
-                    new_color = newColor(new_color,[mod_r,mod_g,mod_b],target,blink_counter)
-                if j == "-":
-                    emitDit(base_length,new_color,dah=True)
-                elif j == ".":
-                    emitDit(base_length,new_color)
-                blink_counter += 1
-            waitEmit(base_length*3)
+            for c in translateText("AR"):
+                for j in c:
+                    if j == "-":
+                        emitDit(base_length,(172,172,172),dah=True)
+                    elif j == ".":
+                        emitDit(base_length,(172,172,172))
+            waitEmit(base_length*7)
 
 def newColor(color,modulos,target,blink_counter):
     color_array = splitColor(color)
@@ -201,11 +211,12 @@ def main():
     parser.add_argument("-c","--color",type=str,default="255,255,255",help="The (initial) color of the blinks. Specify as R,G,B. Default: 255,255,255")
     parser.add_argument("-s","--shift",action="store_true",help="Should the color shift? If yes: --target-color needs to be specified")
     parser.add_argument("-tc","--target-color",type=str,default="255,255,255", help="The final color of the blinks. Specify as R,G,B. Default: 255,255,255")
-    parser.add_argument("-t","--time", type=int, default=100, help="Duration of a single dit in milliseconds. Default: 100") 
+    parser.add_argument("-t","--time",type=int,default=100,help="Duration of a single dit in milliseconds.  Default: 100") 
+    parser.add_argument("-r","--repeat",type=int,default=1,help="How many times should the message repeat?  Defualt: 1") 
     args = parser.parse_args()
     print(args)
     morse_text = translateText(args.text)
-    translateMorse(morse_text,base_length=args.time,color=args.color,shift_color=args.shift,target_color=args.target_color)
+    translateMorse(morse_text,base_length=args.time,color=args.color,shift_color=args.shift,target_color=args.target_color,repeat=args.repeat)
 
 if __name__ == "__main__":
     main()
